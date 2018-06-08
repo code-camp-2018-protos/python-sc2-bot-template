@@ -1,9 +1,10 @@
 import sc2
 from sc2.constants import *
 from sc2.position import Point2
+from random import randint
 import time
 
-MIN_ARMY_SIZE = 9
+MIN_ARMY_SIZE = 3
 
 
 def build_turn(iteration, id):
@@ -138,6 +139,9 @@ class War():
         await self.api.do(attacker.attack(self.best_enemy_position()))
 
     def best_enemy_position(self):
+        if randint(0, 10) == 0:
+            return self.random_place_at_map()
+
         possible_places = [
             self.api.known_enemy_units,
             self.api.known_enemy_structures,
@@ -147,6 +151,13 @@ class War():
         for target in possible_places:
             if len(target) > 0:
                 return target[0]
+
+    def random_place_at_map(self):
+        map_size = self.api.game_info.map_size
+        return Point2((
+            randint(0, map_size.width),
+            randint(0, map_size.height)
+        ))
 
     def get_all_attacking_units(self):
         units = []
