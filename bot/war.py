@@ -65,7 +65,7 @@ class War():
     async def attack_with_all_we_got(self):
         all_attacking_units = self.get_all_attacking_units()
 
-        if len(all_attacking_units) < MIN_ARMY_SIZE:
+        if len(all_attacking_units) < sum(NUM_UNIT_BUILDS.values()) / 2:
             return
 
         for attacker in all_attacking_units:
@@ -83,11 +83,15 @@ class War():
 UNIT_BUILDER_MAP = {
     ZEALOT: GATEWAY,
     STALKER: GATEWAY,
-    ADEPT: GATEWAY
+    ADEPT: GATEWAY,
+    SENTRY: GATEWAY,
+    MOTHERSHIPCORE: GATEWAY
 }
 
 NUM_UNIT_BUILDS = {
-    ZEALOT: 3,
+    ADEPT: 5,
     STALKER: 10,
-    ADEPT: 5
+    SENTRY: 5,
+    ZEALOT: 3,
+    MOTHERSHIPCORE: 1
 }
