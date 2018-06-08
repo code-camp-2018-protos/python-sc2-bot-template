@@ -1,6 +1,7 @@
 import sc2
 from sc2.constants import *
 from sc2.position import Point2
+import time
 
 MIN_ARMY_SIZE = 9
 
@@ -44,12 +45,12 @@ class War():
         """
         #units_for_defence = self.get_all_units_by_types(units)
         #print(self.api.game_info.map_ramps.closest_to(self.api.units(NEXUS).first))
-            
-
+        
         units_under_attack = self.units_under_attack()
+        
         # Check if empty
         if units_under_attack: 
-            print("Nope")
+            pass
             #for unit_type in units:
             #    by_type = self.get_all_units_by_type(unit_type)
             #    for unit in by_type:
@@ -57,13 +58,14 @@ class War():
             #            await self.api.do(unit.move(self.api.units(unit_type).find_by_tag(units_under_attack[0]).location))           
         else:
             if iteration % 10 == 0:
-                for unit_type in units:
-                    by_type = self.get_all_units_by_type(unit_type)
-                    for unit in by_type:
-                        print("Before idle check")
+                start = time.time()
+                for unittype in units:
+                    far_from_ramp = self.api.units(unittype) - self.api.units(unittype).closer_than(8, self.home_ramp_location)
+                    for unit in far_from_ramp:
                         if unit.is_idle:
-                            print(self.home_ramp_location)
                             await self.api.do(unit.move(self.home_ramp_location))
+                end = time.time()
+                print("Move to defence: {}".format(end- start))
 
         #for unit in units_for_defence:
         #    if unit.is_idle:
