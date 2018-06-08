@@ -3,10 +3,12 @@ from sc2 import Race, Difficulty
 from sc2.constants import *
 from sc2.player import Bot, Computer
 from sc2.ids.buff_id import BuffId
+from sc2.position import Point2
 
 DESIRED_WORKER_COUNT = 16
 DESIRED_GATEWAY_COUNT = 2
 DESIRED_STARGATE_COUNT = 2
+DESIRED_CANNON_COUNT = 2
 
 class Build():
     def __init__(self, api):
@@ -19,13 +21,21 @@ class Build():
         else:
             nexus = self.api.units(NEXUS).first
 
+        if iteration == 1:
+            self.cannon_positions = [
+                Point2((max({p.x for p in d}), min({p.y for p in d})))
+                for d in self.api.main_base_ramp.top_wall_depos
+            ]
+
         await self.train_new_workers(nexus)
         await self.build_pylons(nexus)
         await self.build_gas_stuff()
         await self.build_gateway()
         await self.build_cybernetics_core()
-        await self.build_stargate()
+        await self.build_stargate(iteration)
+        await self.build_forge()
         await self.manage_workers(nexus)
+        await self.build_cannons(nexus, iteration)
 
         #print("Build step done")
 
@@ -112,13 +122,30 @@ class Build():
                 print("Build cybernetics core")
                 await self.api.build(CYBERNETICSCORE, near=pylon)
 
-    async def build_stargate(self):
+    async def build_stargate(self, iteration):
         if not self.api.units(PYLON).ready.exists or not self.api.units(CYBERNETICSCORE).ready.exists:
             return
         
         pylon = self.api.units(PYLON).ready.random
         if self.api.units(STARGATE).amount < DESIRED_STARGATE_COUNT and not self.api.already_pending(STARGATE):
-            if self.api.can_afford(STARGATE):
+            if (not self.api.units(STARGATE).ready.exists or iteration > 1200) and self.api.can_afford(STARGATE):
                 print("Build stargate")
                 await self.api.build(STARGATE, near=pylon)
+    
+    async def build_forge(self):
+        if not self.api.units(PYLON).ready.exists or self.api.units(FORGE).ready.exists:
+            return
+        pylon = self.api.units(PYLON).ready.random
+        if not self.api.already_pending(FORGE):
+            if self.api.can_afford(FORGE):
+                print("Build forge")
+                await self.api.build(FORGE, near=pylon)
+
+    async def build_cannons(self, nexus, iteration):
+        cannon_count = self.api.units(PHOTONCANNON).amount
+        if self.api.units(STARGATE).ready.exists and cannon_count < DESIRED_CANNON_COUNT and not self.api.already_pending(PHOTONCANNON):
+            if self.api.can_afford(PHOTONCANNON) and iteration % 10 == 0:
+                print("Building cannon")
+                desired_cannon_position = list(self.cannon_positions)[cannon_count]
+                await self.api.build(PHOTONCANNON, near=desired_cannon_position, max_distance=10)
 

@@ -1,5 +1,6 @@
 import sc2
 from sc2.constants import *
+from sc2.position import Point2
 
 MIN_ARMY_SIZE = 9
 
@@ -13,33 +14,55 @@ class War():
         self.api = api
         self.first_worker_tag = None
         self.oracle_count = 0
-        self.home_ramp = None
+        self.home_ramp_location = None
         self.unit_healths = {} # Tag, Health
 
     async def on_step(self, iteration):
         # await self.attack_with_first_worker()
-        await self.build_shitload_of_zealots(iteration)
+
+        if iteration == 0:
+            self.home_ramp_location = [
+                Point2((max({p.x for p in d}), min({p.y for p in d})))
+                for d in self.api.main_base_ramp.top_wall_depos
+            ][0]
+            print([
+                Point2((max({p.x for p in d}), min({p.y for p in d})))
+                for d in self.api.main_base_ramp.top_wall_depos
+            ])
+
+        await self.build_shitload_of_units(iteration)
         await self.attack_with_all_we_got()
-        await self.move_to_defensive()
+        await self.move_to_defensive(iteration, list(UNIT_BUILDER_MAP.keys()))
         await self.harass(iteration)
         
     async def on_start(self):
-        ## TODO Get home ramp location
         pass
 
-    async def move_to_defensive(self):
+    async def move_to_defensive(self, iteration, units):
         """Move unit to stand between own and enemy.
         Priotise saving units over watching the ramp.
         """
-        units_for_defence = self.get_all_units_by_types([ZEALOT, ADEPT, STALKER])
+        #units_for_defence = self.get_all_units_by_types(units)
         #print(self.api.game_info.map_ramps.closest_to(self.api.units(NEXUS).first))
-        
+            
+
         units_under_attack = self.units_under_attack()
-        if units_under_attack: # Check if empty
-            for unit in units_for_defence:
-                if unit.is_idle:
-                    self.api.do(unit.move(self.api.units.by_tag(units_under_attack[0]).location))    
-        
+        # Check if empty
+        if units_under_attack: 
+            for unit_type in units:
+                by_type = self.get_all_units_by_type(unit_type)
+                for unit in by_type:
+                    if unit.is_idle:
+                        await self.api.do(unit.move(self.api.units(unit_type).find_by_tag(units_under_attack[0]).location))           
+        else:
+            if iteration % 10 == 0:
+                for unit_type in units:
+                    by_type = self.get_all_units_by_type(unit_type)
+                    for unit in by_type:
+                        print("Before idle check")
+                        if unit.is_idle:
+                            print(self.home_ramp_location)
+                            await self.api.do(unit.move(self.home_ramp_location))
 
         #for unit in units_for_defence:
         #    if unit.is_idle:
@@ -53,7 +76,7 @@ class War():
             if prev_health is None:
                 self.unit_healths[unit.tag] = unit.health
             else:
-                if self.unit_healths[unit.tag] > unit.health:
+                if self.unit_healths[unit.tag] > unit.health and unit.health > 0: # Health has decresed and unit is alive
                     units.append(unit.tag)
         return units
 
@@ -70,14 +93,9 @@ class War():
                         await self.api.do(stargate.train(ORACLE))
                         self.oracle_count += 1
 
-        await self.build_shitload_of_stalkers(iteration)
-        await self.build_shitload_of_adepts(iteration)
-        await self.attack_with_all_we_got()
-
         if iteration % 100 == 0:
             for oracle in self.api.units(ORACLE):
                 await self.api.do(oracle.attack(self.api.enemy_start_locations[0]))
-
 
     async def build_num_of(self, number_of_units, unit_type, iteration):
         if build_turn(iteration, 2):
@@ -93,19 +111,14 @@ class War():
                 if self.api.can_afford(unit_type):
                     await self.api.do(building_unit.train(unit_type))
 
-    async def build_shitload_of_zealots(self, iteration):
-        await self.build_num_of(3, ZEALOT, iteration)
-
-    async def build_shitload_of_stalkers(self, iteration):
-        await self.build_num_of(3, STALKER, iteration)
-
-    async def build_shitload_of_adepts(self, iteration):
-        await self.build_num_of(5, ADEPT, iteration)
+    async def build_shitload_of_units(self, iteration):
+        for unit_type, num_units in NUM_UNIT_BUILDS.items():
+            await self.build_num_of(num_units, unit_type, iteration)
 
     async def attack_with_all_we_got(self):
         all_attacking_units = self.get_all_attacking_units()
 
-        if len(all_attacking_units) < MIN_ARMY_SIZE:
+        if len(all_attacking_units) < sum(NUM_UNIT_BUILDS.values()) / 2:
             return
 
         for attacker in all_attacking_units:
@@ -121,13 +134,26 @@ class War():
 
     def get_all_units_by_types(self, unittypes):
         units = []
-        for unit_type in unittypes:
-            units.extend(self.api.units(unit_type))
+        for unittype in unittypes:
+            units.extend(self.api.units(unittype))
         return units
+
+    def get_all_units_by_type(self, unittype):
+        return self.api.units(unittype)
 
 
 UNIT_BUILDER_MAP = {
     ZEALOT: GATEWAY,
     STALKER: GATEWAY,
-    ADEPT: GATEWAY
+    ADEPT: GATEWAY,
+    SENTRY: GATEWAY,
+    MOTHERSHIPCORE: GATEWAY
+}
+
+NUM_UNIT_BUILDS = {
+    ADEPT: 5,
+    STALKER: 10,
+    SENTRY: 5,
+    ZEALOT: 3,
+    MOTHERSHIPCORE: 1
 }
