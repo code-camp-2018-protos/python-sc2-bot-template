@@ -7,6 +7,9 @@ class Upgrader():
         self.api = api
 
     async def on_step(self, iteration):
+        if iteration % 10 != 0:
+            return
+
         for unit, dependencies in UPGRADE_TACTICS.items():
             if self.api.units(unit).empty:
                 continue
