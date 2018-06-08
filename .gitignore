@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.SC2Replay
 
 # C extensions
 *.so
