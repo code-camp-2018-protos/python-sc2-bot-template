@@ -23,8 +23,8 @@ class War():
 
     async def move_to_defensive(self):
         """Move unit to stand between own and enemy."""
-        print(self.api.enemy_start_locations[0])
-        print(self.api.units(NEXUS).first.position)
+        #print(self.api.enemy_start_locations[0])
+        #print(self.api.units(NEXUS).first.position)
         pass
 
     async def harass(self, iteration):
