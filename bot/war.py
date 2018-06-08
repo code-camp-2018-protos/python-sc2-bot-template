@@ -9,6 +9,9 @@ class War():
 
     async def on_step(self, iteration):
         #first_nexus = self.api.units(NEXUS).ready.first
+        await self.attack_with_first_worker()
+
+    async def attack_with_first_worker(self):
         if self.api.workers.find_by_tag(self.first_worker_tag) is None:
             self.first_worker_tag = self.api.workers.first.tag
 
