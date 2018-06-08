@@ -1,3 +1,4 @@
+from math import pi
 import sc2
 from sc2 import Race, Difficulty
 from sc2.constants import *
@@ -72,11 +73,11 @@ class Build():
         if not self.api.units(PYLON).exists:
             if self.api.can_afford(PYLON):
                 print("Building first pylon!")
-                await self.api.build(PYLON, near=self.build_position(nexus))
+                await self.api.build(PYLON, near=self.safe_base_build_position(nexus))
         elif self.api.supply_left < 2 and not self.api.already_pending(PYLON):
             if self.api.can_afford(PYLON):
                 print("Building additional pylon")
-                await self.api.build(PYLON, near=self.build_position(nexus))
+                await self.api.build(PYLON, near=self.safe_base_build_position(nexus))
 
     async def build_gas_stuff(self):
         def gaysers_not_full():
@@ -91,15 +92,11 @@ class Build():
             if self.api.units(ASSIMILATOR).ready.exists and (should_not_build or not self.api.units(STARGATE).ready.exists):
                 return
             for vg in vgs:
-                if self.api.already_pending(ASSIMILATOR):
-                    return
-                if not self.api.can_afford(ASSIMILATOR):
-                    #print("Can't afford assimilator")
+                if self.api.already_pending(ASSIMILATOR) or not self.api.can_afford(ASSIMILATOR):
                     break
 
                 worker = self.api.select_build_worker(vg.position)
                 if worker is None:
-                    #print("Can't find worker for building assimilator")
                     break
 
                 if not self.api.units(ASSIMILATOR).closer_than(1.0, vg).exists:
@@ -112,8 +109,9 @@ class Build():
         
         if self.api.units(GATEWAY).amount < DESIRED_GATEWAY_COUNT:
             if self.api.can_afford(GATEWAY) and not self.api.already_pending(GATEWAY):
+                pylon = self.api.units(PYLON).ready.random
                 print("Build gateway")
-                await self.api.build(GATEWAY, near=self.build_position(nexus))
+                await self.api.build(GATEWAY, near=pylon)
 
     async def build_cybernetics_core(self):
         if self.api.units(GATEWAY).ready.exists and not self.api.units(CYBERNETICSCORE).exists:
@@ -127,9 +125,10 @@ class Build():
             return
         
         if self.api.units(STARGATE).amount < DESIRED_STARGATE_COUNT and not self.api.already_pending(STARGATE):
-            if (not self.api.units(STARGATE).ready.exists or iteration > 1100) and self.api.can_afford(STARGATE):
+            if (not self.api.units(STARGATE).ready.exists or iteration > 800) and self.api.can_afford(STARGATE):
                 print("Build stargate")
-                await self.api.build(STARGATE, near=self.build_position(nexus))
+                pylon = self.api.units(PYLON).ready.random
+                await self.api.build(STARGATE, near=pylon)
     
     async def build_forge(self):
         if not self.api.units(PYLON).ready.exists or self.api.units(FORGE).ready.exists:
@@ -156,6 +155,8 @@ class Build():
                 desired_cannon_position = list(self.cannon_positions)[cannon_count]
                 await self.api.build(PHOTONCANNON, near=desired_cannon_position, max_distance=10)
 
-    def build_position(self, nexus):
+    def safe_base_build_position(self, nexus):
         distance = (self.api.units(PYLON).amount * 4) + 5
-        return nexus.position.towards_with_random_angle(self.api.game_info.map_center, distance)
+        iterations = 10
+        others = self.api.units(PYLON)
+        return nexus.position.towards_with_random_angle(self.api.game_info.map_center, distance, (pi/2))
