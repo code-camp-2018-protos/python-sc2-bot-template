@@ -33,6 +33,8 @@ class Build():
         await self.build_gas_stuff()
         await self.build_pylons(nexus)
         await self.build_gateway()
+        await self.build_cybernetics_core()
+        await self.build_stargate()
 
         #print("Build step done")
 
@@ -75,3 +77,21 @@ class Build():
             if self.api.can_afford(GATEWAY) and not self.api.already_pending(GATEWAY):
                 print("Build gateway")
                 await self.api.build(GATEWAY, near=pylon)
+
+    async def build_cybernetics_core(self):
+        if self.api.units(GATEWAY).ready.exists and not self.api.units(CYBERNETICSCORE).exists:
+            pylon = self.api.units(PYLON).ready.random
+            if self.api.can_afford(CYBERNETICSCORE) and not self.api.already_pending(CYBERNETICSCORE):
+                print("Build cybernetics core")
+                await self.api.build(CYBERNETICSCORE, near=pylon)
+
+    async def build_stargate(self):
+        if not self.api.units(PYLON).ready.exists or not self.api.units(CYBERNETICSCORE).ready.exists:
+            return
+        
+        pylon = self.api.units(PYLON).ready.random
+        if self.api.units(STARGATE).amount < 3 and not self.api.already_pending(STARGATE):
+            if self.api.can_afford(STARGATE):
+                print("Build stargåte")
+                await self.api.build(STARGATE, near=pylon)
+
