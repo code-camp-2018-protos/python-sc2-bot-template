@@ -4,7 +4,7 @@ from sc2.position import Point2
 from random import randint
 import time
 
-MIN_ARMY_SIZE = 3
+MIN_ARMY_SIZE = 10
 
 
 def build_turn(iteration, id):
@@ -123,7 +123,7 @@ class War():
     async def attack_with_all_we_got(self):
         all_attacking_units = self.get_all_attacking_units()
 
-        if len(all_attacking_units) < sum(NUM_UNIT_BUILDS.values()) / 2:
+        if len(all_attacking_units) < MIN_ARMY_SIZE:
             return
 
         valid_attackers = [
@@ -185,9 +185,9 @@ UNIT_BUILDER_MAP = {
 }
 
 NUM_UNIT_BUILDS = {
-    ADEPT: 5,
-    STALKER: 10,
-    SENTRY: 5,
-    ZEALOT: 3,
-    MOTHERSHIPCORE: 1
+    ADEPT: 20,
+    STALKER: 50,
+    SENTRY: 20,
+    ZEALOT: 15,
+    MOTHERSHIPCORE: 10
 }
