@@ -64,7 +64,7 @@ class War():
                         if unit.is_idle:
                             await self.api.do(unit.move(self.home_ramp_location))
                 end = time.time()
-                print("Move to defence: {}".format(end - start))
+                #print("Move to defence: {}".format(end- start))
 
         # for unit in units_for_defence:
         #    if unit.is_idle:
