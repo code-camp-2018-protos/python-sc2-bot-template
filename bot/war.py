@@ -4,7 +4,7 @@ from sc2.position import Point2
 import time
 
 MIN_ARMY_SIZE = 9
-ORACLE_HARASS = 0
+ORACLE_HARASS = 1
 
 
 def build_turn(iteration, id):
@@ -42,22 +42,21 @@ class War():
         Priotise saving units over watching the ramp.
         """
 
-        units_under_attack = self.units_under_attack()
+        unit_under_attack_location = self.units_under_attack()
 
         # Check if empty
-        if units_under_attack:
-            pass
-            # for unit_type in units:
-            #    by_type = self.get_all_units_by_type(unit_type)
-            #    for unit in by_type:
-            #        if unit.is_idle:
-            #            await self.api.do(unit.move(self.api.units(unit_type).find_by_tag(units_under_attack[0]).location))
+        if unit_under_attack_location is not None:
+            if iteration % 5 == 0:
+                for unit_type in units:
+                    by_type = self.get_all_units_by_type(unit_type)
+                    for unit in by_type:
+                        if unit.is_idle:
+                            await self.api.do(unit.move(unit_under_attack_location))
         else:
             if iteration % 10 == 0:
                 start = time.time()
                 for unittype in units:
-                    far_from_ramp = self.api.units(
-                        unittype) - self.api.units(unittype).closer_than(8, self.home_ramp_location)
+                    far_from_ramp = self.api.units(unittype) - self.api.units(unittype).closer_than(8, self.home_ramp_location)
                     for unit in far_from_ramp:
                         if unit.is_idle:
                             await self.api.do(unit.move(self.home_ramp_location))
@@ -69,17 +68,27 @@ class War():
         #        self.api.do(unit.move(self.home_ramp))
 
     def units_under_attack(self):
-        units = []
+        """
+        Check if units are under attack:
+        Priority: Worker > Building > Everything else
+        """
+        
         # Check if the health has changed
-        for unit in self.api.units:
-            prev_health = self.unit_healths.get(unit.tag, None)
-            if prev_health is None:
-                self.unit_healths[unit.tag] = unit.health
-            else:
-                # Health has decresed and unit is alive
-                if self.unit_healths[unit.tag] > unit.health and unit.health > 0:
-                    units.append(unit.tag)
-        return units
+        for unit in self.api.workers:
+            prev_health = self.unit_healths.get(unit.tag, unit.health)
+            if prev_health > unit.health and unit.health > 0:
+                    return unit.location
+
+        for unit in self.api.units.filter(lambda unit: unit.is_structure):
+            prev_health = self.unit_healths.get(unit.tag, unit.health)
+            if prev_health > unit.health and unit.health > 0:
+                    return unit.location
+
+        for unit in (self.api.units.filter(lambda unit: not unit.is_structure) - self.api.workers):
+            prev_health = self.unit_healths.get(unit.tag, unit.health)
+            if prev_health > unit.health and unit.health > 0:
+                    return unit.location
+
 
     async def harass(self, iteration):
 
