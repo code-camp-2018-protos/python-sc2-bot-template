@@ -8,7 +8,7 @@ class War():
         self.first_worker_tag = None
 
     async def on_step(self, iteration):
-        await self.attack_with_first_worker()
+        # await self.attack_with_first_worker()
         await self.build_shitload_of_zealots(iteration)
         await self.attack_with_many_zealots()
 
