@@ -3,4 +3,4 @@ class Build():
         self.api = api
 
     async def on_step(self, iteration):
-        await self.chat_send("BUILD!!!")
+        await self.api.chat_send("BUILD!!!")
