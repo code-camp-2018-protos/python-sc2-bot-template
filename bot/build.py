@@ -30,10 +30,23 @@ class Build():
 
     async def manage_workers(self, nexus):
         # Mine minerals biatch
-        await self.api.distribute_workers()
-        #for idle_worker in self.api.workers.idle:
-        #    mf = self.api.state.mineral_field.closest_to(idle_worker)
-        #    await self.api.do(idle_worker.gather(mf))
+
+        def find_empty_gasfield():
+            for g in self.api.geysers:
+                if g.ideal_harvesters > g.assigned_harvesters:
+                    return g
+
+        for idle_worker in self.api.workers.idle:
+            empty_gasfield = find_empty_gasfield()
+            if empty_gasfield:
+                #print("Assign worker to gasfield", idle_worker.tag)
+                await self.api.do(idle_worker.gather(empty_gasfield))
+            else:
+                mf = self.api.state.mineral_field.closest_to(idle_worker)
+                #print("Assign worker to mineral field", idle_worker.tag)
+                await self.api.do(idle_worker.gather(mf))
+
+        #await self.api.distribute_workers()
 
     async def train_new_workers(self, nexus):
         if self.api.workers.amount < DESIRED_WORKER_COUNT and nexus.noqueue:
@@ -62,8 +75,8 @@ class Build():
 
         for nexus in self.api.units(NEXUS).ready:
             vgs = self.api.state.vespene_geyser.closer_than(20.0, nexus)
-            should_build = gaysers_not_full()
-            if self.api.units(ASSIMILATOR).ready.exists and not should_build:
+            should_not_build = gaysers_not_full()
+            if self.api.units(ASSIMILATOR).ready.exists and should_not_build:
                 return
             for vg in vgs:
                 if self.api.already_pending(ASSIMILATOR):
