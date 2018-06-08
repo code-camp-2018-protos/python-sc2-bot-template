@@ -6,7 +6,7 @@ from sc2.player import Bot, Computer
 from sc2.ids.buff_id import BuffId
 from sc2.position import Point2
 
-DESIRED_WORKER_COUNT = 18
+DESIRED_WORKER_COUNT = 20
 DESIRED_GATEWAY_COUNT = 2
 DESIRED_STARGATE_COUNT = 2
 DESIRED_CANNON_COUNT = 2
@@ -76,7 +76,7 @@ class Build():
             if self.api.can_afford(PYLON):
                 print("Building first pylon!")
                 await self.api.build(PYLON, near=self.safe_base_build_position(nexus))
-        elif self.api.supply_left < 2 and not self.api.already_pending(PYLON):
+        elif self.api.supply_left < 3 and not self.api.already_pending(PYLON):
             if self.api.can_afford(PYLON):
                 print("Building additional pylon")
                 await self.api.build(PYLON, near=self.safe_base_build_position(nexus))
@@ -158,5 +158,5 @@ class Build():
                 await self.api.build(PHOTONCANNON, near=desired_cannon_position, max_distance=10)
 
     def safe_base_build_position(self, nexus):
-        distance = min(((self.api.units(PYLON).amount * 4) + 4), 15)
+        distance = min(((self.api.units(PYLON).amount * 4) + 5), 18)
         return nexus.position.towards_with_random_angle(self.api.game_info.map_center, distance, (pi/2))
