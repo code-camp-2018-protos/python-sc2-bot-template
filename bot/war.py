@@ -13,6 +13,8 @@ class War():
         self.api = api
         self.first_worker_tag = None
         self.oracle_count = 0
+        self.home_ramp = None
+        self.unit_healths = {} # Tag, Health
 
     async def on_step(self, iteration):
         # await self.attack_with_first_worker()
@@ -21,11 +23,39 @@ class War():
         await self.move_to_defensive()
         await self.harass(iteration)
         
-    async def move_to_defensive(self):
-        """Move unit to stand between own and enemy."""
-        print(self.api.enemy_start_locations[0])
-        print(self.api.units(NEXUS).first.position)
+    async def on_start(self):
+        ## TODO Get home ramp location
         pass
+
+    async def move_to_defensive(self):
+        """Move unit to stand between own and enemy.
+        Priotise saving units over watching the ramp.
+        """
+        units_for_defence = self.get_all_units_by_types([ZEALOT, ADEPT, STALKER])
+        #print(self.api.game_info.map_ramps.closest_to(self.api.units(NEXUS).first))
+        
+        units_under_attack = self.units_under_attack()
+        if units_under_attack: # Check if empty
+            for unit in units_for_defence:
+                if unit.is_idle:
+                    self.api.do(unit.move(self.api.units.by_tag(units_under_attack[0]).location))    
+        
+
+        #for unit in units_for_defence:
+        #    if unit.is_idle:
+        #        self.api.do(unit.move(self.home_ramp))
+        
+    def units_under_attack(self):
+        units = []
+        # Check if the health has changed
+        for unit in self.api.units:
+            prev_health = self.unit_healths.get(unit.tag, None)
+            if prev_health is None:
+                self.unit_healths[unit.tag] = unit.health
+            else:
+                if self.unit_healths[unit.tag] > unit.health:
+                    units.append(unit.tag)
+        return units
 
     async def harass(self, iteration):
         # Gateway == Barracs
@@ -87,6 +117,12 @@ class War():
         for unit_type in UNIT_BUILDER_MAP:
             for unit in self.api.units(unit_type):
                 units.append(unit)
+        return units
+
+    def get_all_units_by_types(self, unittypes):
+        units = []
+        for unit_type in unittypes:
+            units.extend(self.api.units(unit_type))
         return units
 
 
