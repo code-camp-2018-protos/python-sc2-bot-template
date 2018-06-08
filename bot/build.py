@@ -39,6 +39,9 @@ class Build():
         await self.build_cannons(nexus, iteration)
         await self.build_twilight_cauncil()
 
+
+        #print("NESXT ESPAISSON", await self.api.get_next_expansion())
+
         #print("Build step done")
 
     async def manage_workers(self, nexus, iteration):
@@ -127,13 +130,13 @@ class Build():
             return
         
         if self.api.units(STARGATE).amount < DESIRED_STARGATE_COUNT and not self.api.already_pending(STARGATE):
-            if (not self.api.units(STARGATE).ready.exists or iteration > 800) and self.api.can_afford(STARGATE):
+            if (not self.api.units(STARGATE).ready.exists or iteration > 600) and self.api.can_afford(STARGATE):
                 print("Build stargate")
                 pylon = self.api.units(PYLON).ready.random
                 await self.api.build(STARGATE, near=pylon)
     
     async def build_forge(self):
-        if not self.api.units(PYLON).ready.exists or self.api.units(FORGE).ready.exists:
+        if self.api.units(FORGE).ready.exists or self.api.units(GATEWAY).amount < DESIRED_GATEWAY_COUNT:
             return
         pylon = self.api.units(PYLON).ready.random
         if not self.api.already_pending(FORGE):

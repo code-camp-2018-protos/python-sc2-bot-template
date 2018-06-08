@@ -1,9 +1,10 @@
 import sc2
 from sc2.constants import *
 from sc2.position import Point2
+from random import randint
 import time
 
-MIN_ARMY_SIZE = 9
+MIN_ARMY_SIZE = 10
 ORACLE_HARASS = 1
 
 
@@ -61,7 +62,7 @@ class War():
                         if unit.is_idle:
                             await self.api.do(unit.move(self.home_ramp_location))
                 end = time.time()
-                print("Move to defence: {}".format(end - start))
+                #print("Move to defence: {}".format(end- start))
 
         # for unit in units_for_defence:
         #    if unit.is_idle:
@@ -127,7 +128,7 @@ class War():
     async def attack_with_all_we_got(self):
         all_attacking_units = self.get_all_attacking_units()
 
-        if len(all_attacking_units) < sum(NUM_UNIT_BUILDS.values()) / 2:
+        if len(all_attacking_units) < MIN_ARMY_SIZE:
             return
 
         valid_attackers = [
@@ -143,6 +144,9 @@ class War():
         await self.api.do(attacker.attack(self.best_enemy_position()))
 
     def best_enemy_position(self):
+        if randint(0, 10) == 0:
+            return self.random_place_at_map()
+
         possible_places = [
             self.api.known_enemy_units,
             self.api.known_enemy_structures,
@@ -152,6 +156,13 @@ class War():
         for target in possible_places:
             if len(target) > 0:
                 return target[0]
+
+    def random_place_at_map(self):
+        map_size = self.api.game_info.map_size
+        return Point2((
+            randint(0, map_size.width),
+            randint(0, map_size.height)
+        ))
 
     def get_all_attacking_units(self):
         units = []
@@ -175,13 +186,17 @@ UNIT_BUILDER_MAP = {
     STALKER: GATEWAY,
     ADEPT: GATEWAY,
     SENTRY: GATEWAY,
-    MOTHERSHIPCORE: GATEWAY
+    MOTHERSHIPCORE: GATEWAY,
+    PHOENIX: STARGATE,
+    VOIDRAY: STARGATE
 }
 
 NUM_UNIT_BUILDS = {
-    ADEPT: 5,
-    STALKER: 10,
-    SENTRY: 5,
-    ZEALOT: 3,
-    MOTHERSHIPCORE: 1
+    ADEPT: 3,
+    STALKER: 20,
+    SENTRY: 2,
+    ZEALOT: 4,
+    MOTHERSHIPCORE: 5,
+    PHOENIX: 10,
+    VOIDRAY: 4
 }
