@@ -18,10 +18,13 @@ class War():
         # await self.attack_with_first_worker()
         await self.build_shitload_of_zealots(iteration)
         await self.attack_with_all_we_got()
+        await self.move_to_defensive()
         await self.harass(iteration)
         
-    async def move_to_defensive(self, unit):
+    async def move_to_defensive(self):
         """Move unit to stand between own and enemy."""
+        print(self.api.enemy_start_locations[0])
+        print(self.api.units(NEXUS).first.position)
         pass
 
     async def harass(self, iteration):
@@ -40,10 +43,6 @@ class War():
         await self.build_shitload_of_stalkers(iteration)
         await self.build_shitload_of_adepts(iteration)
         await self.attack_with_all_we_got()
-
-    async def attack_with_first_worker(self):
-        if self.api.workers.find_by_tag(self.first_worker_tag) is None:
-            self.first_worker_tag = self.api.workers.first.tag
 
         if iteration % 100 == 0:
             for oracle in self.api.units(ORACLE):
