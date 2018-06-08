@@ -29,8 +29,8 @@ class War():
                 for d in self.api.main_base_ramp.top_wall_depos
             ][0]
 
-        if self.oracle_count >= ORACLE_HARASS:
-            await self.build_shitload_of_units(iteration)
+        # if self.oracle_count >= ORACLE_HARASS:
+        await self.build_shitload_of_units(iteration)
         await self.attack_with_all_we_got()
         await self.move_to_defensive(iteration, list(UNIT_BUILDER_MAP.keys()))
         await self.harass(iteration)
@@ -57,7 +57,8 @@ class War():
             if iteration % 10 == 0:
                 start = time.time()
                 for unittype in units:
-                    far_from_ramp = self.api.units(unittype) - self.api.units(unittype).closer_than(8, self.home_ramp_location)
+                    far_from_ramp = self.api.units(
+                        unittype) - self.api.units(unittype).closer_than(8, self.home_ramp_location)
                     for unit in far_from_ramp:
                         if unit.is_idle:
                             await self.api.do(unit.move(self.home_ramp_location))
@@ -73,23 +74,22 @@ class War():
         Check if units are under attack:
         Priority: Worker > Building > Everything else
         """
-        
+
         # Check if the health has changed
         for unit in self.api.workers:
             prev_health = self.unit_healths.get(unit.tag, unit.health)
             if prev_health > unit.health and unit.health > 0:
-                    return unit.location
+                return unit.location
 
         for unit in self.api.units.filter(lambda unit: unit.is_structure):
             prev_health = self.unit_healths.get(unit.tag, unit.health)
             if prev_health > unit.health and unit.health > 0:
-                    return unit.location
+                return unit.location
 
         for unit in (self.api.units.filter(lambda unit: not unit.is_structure) - self.api.workers):
             prev_health = self.unit_healths.get(unit.tag, unit.health)
             if prev_health > unit.health and unit.health > 0:
-                    return unit.location
-
+                return unit.location
 
     async def harass(self, iteration):
 
