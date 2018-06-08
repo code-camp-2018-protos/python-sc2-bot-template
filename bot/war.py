@@ -49,11 +49,12 @@ class War():
         units_under_attack = self.units_under_attack()
         # Check if empty
         if units_under_attack: 
-            for unit_type in units:
-                by_type = self.get_all_units_by_type(unit_type)
-                for unit in by_type:
-                    if unit.is_idle:
-                        await self.api.do(unit.move(self.api.units(unit_type).find_by_tag(units_under_attack[0]).location))           
+            print("Nope")
+            #for unit_type in units:
+            #    by_type = self.get_all_units_by_type(unit_type)
+            #    for unit in by_type:
+            #        if unit.is_idle:
+            #            await self.api.do(unit.move(self.api.units(unit_type).find_by_tag(units_under_attack[0]).location))           
         else:
             if iteration % 10 == 0:
                 for unit_type in units:
