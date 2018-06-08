@@ -25,6 +25,8 @@ class Upgrader():
                 first_upgrade = upgrades[0]
 
                 if self.api.can_afford(first_upgrade):
+                    print("Upgrading {} from {}".format(
+                        first_upgrade, first_unit))
                     await self.api.do(first_unit(first_upgrade))
                     upgrades.remove(first_upgrade)
                     return
