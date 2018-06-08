@@ -50,7 +50,7 @@ class War():
             return
 
         if unit_type not in UNIT_BUILDER_MAP:
-            #print unit_type + ' not defined!!!!'
+            raise Exception('unit type {} not defined!' .format(unit_type))
             pass
 
         if len(self.api.units(unit_type)) < number_of_units:
