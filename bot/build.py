@@ -32,6 +32,7 @@ class Build():
 
         await self.build_gas_stuff()
         await self.build_pylons(nexus)
+        await self.build_gateway()
 
         #print("Build step done")
 
@@ -64,3 +65,13 @@ class Build():
                 if not self.api.units(ASSIMILATOR).closer_than(1.0, vg).exists:
                     print("Build gas assimilator")
                     await self.api.do(worker.build(ASSIMILATOR, vg))
+
+    async def build_gateway(self):
+        if not self.api.units(PYLON).ready.exists:
+            return
+        
+        pylon = self.api.units(PYLON).ready.random
+        if not self.api.units(GATEWAY).ready.exists:
+            if self.api.can_afford(GATEWAY) and not self.api.already_pending(GATEWAY):
+                print("Build gateway")
+                await self.api.build(GATEWAY, near=pylon)
