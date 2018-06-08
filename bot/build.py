@@ -62,8 +62,8 @@ class Build():
 
         for nexus in self.api.units(NEXUS).ready:
             vgs = self.api.state.vespene_geyser.closer_than(20.0, nexus)
-            should_build = gaysers_not_full()
-            if self.api.units(ASSIMILATOR).ready.exists and not should_build:
+            should_not_build = gaysers_not_full()
+            if self.api.units(ASSIMILATOR).ready.exists and should_not_build:
                 return
             for vg in vgs:
                 if self.api.already_pending(ASSIMILATOR):
