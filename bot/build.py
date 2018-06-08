@@ -5,6 +5,7 @@ from sc2.player import Bot, Computer
 from sc2.ids.buff_id import BuffId
 
 DESIRED_WORKER_COUNT = 16
+DESIRED_GATEWAY_COUNT = 2
 DESIRED_STARGATE_COUNT = 2
 
 class Build():
@@ -19,8 +20,8 @@ class Build():
             nexus = self.api.units(NEXUS).first
 
         await self.train_new_workers(nexus)
-        await self.build_gas_stuff()
         await self.build_pylons(nexus)
+        await self.build_gas_stuff()
         await self.build_gateway()
         await self.build_cybernetics_core()
         await self.build_stargate()
@@ -76,7 +77,7 @@ class Build():
         for nexus in self.api.units(NEXUS).ready:
             vgs = self.api.state.vespene_geyser.closer_than(20.0, nexus)
             should_not_build = gaysers_not_full()
-            if self.api.units(ASSIMILATOR).ready.exists and should_not_build:
+            if self.api.units(ASSIMILATOR).ready.exists and (should_not_build or not self.api.units(STARGATE).ready.exists):
                 return
             for vg in vgs:
                 if self.api.already_pending(ASSIMILATOR):
@@ -99,7 +100,7 @@ class Build():
             return
         
         pylon = self.api.units(PYLON).ready.random
-        if not self.api.units(GATEWAY).ready.exists:
+        if self.api.units(GATEWAY).amount < DESIRED_GATEWAY_COUNT:
             if self.api.can_afford(GATEWAY) and not self.api.already_pending(GATEWAY):
                 print("Build gateway")
                 await self.api.build(GATEWAY, near=pylon)
