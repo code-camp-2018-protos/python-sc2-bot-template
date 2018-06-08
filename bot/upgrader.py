@@ -7,4 +7,18 @@ class Upgrader():
         self.api = api
 
     async def on_step(self, iteration):
-        pass
+        for unit, upgrades in UPGRADE_TACTICS.items():
+            if self.api.units(unit).empty or len(upgrades) == 0:
+                return
+
+            first_unit = self.api.units(unit).first
+            first_upgrade = upgrades[0]
+
+            if self.api.can_afford(first_upgrade):
+                await self.api.do(first_unit(first_upgrade))
+                upgrades.remove(first_upgrade)
+
+
+UPGRADE_TACTICS = {
+    FORGE: [FORGERESEARCH_PROTOSSGROUNDWEAPONSLEVEL1, FORGERESEARCH_PROTOSSGROUNDARMORLEVEL1, FORGERESEARCH_PROTOSSSHIELDSLEVEL1]
+}
