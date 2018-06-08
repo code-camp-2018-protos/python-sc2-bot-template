@@ -1,8 +1,12 @@
 import sc2
 from sc2.constants import *
 
+MIN_ARMY_SIZE = 9
+
+
 def build_turn(iteration, id):
     return iteration % 3 == id
+
 
 class War():
     def __init__(self, api):
@@ -13,6 +17,7 @@ class War():
         # await self.attack_with_first_worker()
         await self.build_shitload_of_zealots(iteration)
         await self.build_shitload_of_stalkers(iteration)
+        await self.build_shitload_of_adepts(iteration)
         await self.attack_with_all_we_got()
 
     async def attack_with_first_worker(self):
@@ -41,17 +46,31 @@ class War():
         await self.build_num_of(3, ZEALOT, iteration)
 
     async def build_shitload_of_stalkers(self, iteration):
-        await self.build_num_of(10, STALKER, iteration)
+        await self.build_num_of(3, STALKER, iteration)
+
+    async def build_shitload_of_adepts(self, iteration):
+        await self.build_num_of(5, ADEPT, iteration)
 
     async def attack_with_all_we_got(self):
-        if len(self.api.units(ZEALOT)) >= 3 and len(self.api.units(STALKER)) >= 10:
-            for zealot in self.api.units(ZEALOT):
-                await self.api.do(zealot.attack(self.api.enemy_start_locations[0]))
-            for stalker in self.api.units(STALKER):
-                await self.api.do(stalker.attack(self.api.enemy_start_locations[0]))
+        all_attacking_units = self.get_all_attacking_units()
+
+        if len(all_attacking_units) < MIN_ARMY_SIZE:
+            return
+
+        for attacker in all_attacking_units:
+            if attacker.is_idle:
+                await self.api.do(attacker.attack(self.api.enemy_start_locations[0]))
+
+    def get_all_attacking_units(self):
+        units = []
+        for unit_type in UNIT_BUILDER_MAP:
+            for unit in self.api.units(unit_type):
+                units.append(unit)
+        return units
 
 
 UNIT_BUILDER_MAP = {
     ZEALOT: GATEWAY,
-    STALKER: GATEWAY
+    STALKER: GATEWAY,
+    ADEPT: GATEWAY
 }
