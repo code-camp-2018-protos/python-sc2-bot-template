@@ -45,11 +45,11 @@ class War():
         """
 
         units_under_attack = self.units_under_attack()
-        
+
         # Check if empty
-        if units_under_attack: 
+        if units_under_attack:
             pass
-            #for unit_type in units:
+            # for unit_type in units:
             #    by_type = self.get_all_units_by_type(unit_type)
             #    for unit in by_type:
             #        if unit.is_idle:
@@ -58,12 +58,13 @@ class War():
             if iteration % 10 == 0:
                 start = time.time()
                 for unittype in units:
-                    far_from_ramp = self.api.units(unittype) - self.api.units(unittype).closer_than(8, self.home_ramp_location)
+                    far_from_ramp = self.api.units(
+                        unittype) - self.api.units(unittype).closer_than(8, self.home_ramp_location)
                     for unit in far_from_ramp:
                         if unit.is_idle:
                             await self.api.do(unit.move(self.home_ramp_location))
                 end = time.time()
-                print("Move to defence: {}".format(end- start))
+                print("Move to defence: {}".format(end - start))
 
         # for unit in units_for_defence:
         #    if unit.is_idle:
@@ -97,7 +98,7 @@ class War():
 
         if iteration % 100 == 0:
             for oracle in self.api.units(ORACLE):
-                await self.api.do(oracle.attack(self.api.enemy_start_locations[0]))
+                await self.attack_to_best_enemy_with(oracle)
 
     async def build_num_of(self, number_of_units, unit_type, iteration):
         if build_turn(iteration, 2):
@@ -131,7 +132,21 @@ class War():
 
         print("Attacking with {} units".format(len(valid_attackers)))
         for attacker in valid_attackers:
-            await self.api.do(attacker.attack(self.api.enemy_start_locations[0]))
+            await self.attack_to_best_enemy_with(attacker)
+
+    async def attack_to_best_enemy_with(self, attacker):
+        await self.api.do(attacker.attack(self.best_enemy_position()))
+
+    def best_enemy_position(self):
+        possible_places = [
+            self.api.known_enemy_units,
+            self.api.known_enemy_structures,
+            self.api.enemy_start_locations
+        ]
+
+        for target in possible_places:
+            if len(target) > 0:
+                return target[0]
 
     def get_all_attacking_units(self):
         units = []
