@@ -6,7 +6,7 @@ from sc2.player import Bot, Computer
 from sc2.ids.buff_id import BuffId
 from sc2.position import Point2
 
-DESIRED_WORKER_COUNT = 16
+DESIRED_WORKER_COUNT = 18
 DESIRED_GATEWAY_COUNT = 2
 DESIRED_STARGATE_COUNT = 2
 DESIRED_CANNON_COUNT = 2
@@ -35,14 +35,16 @@ class Build():
         await self.build_cybernetics_core()
         await self.build_stargate(nexus, iteration)
         await self.build_forge()
-        await self.manage_workers(nexus)
+        await self.manage_workers(nexus, iteration)
         await self.build_cannons(nexus, iteration)
         await self.build_twilight_cauncil()
 
         #print("Build step done")
 
-    async def manage_workers(self, nexus):
+    async def manage_workers(self, nexus, iteration):
         # Mine minerals biatch
+        if iteration % 10 != 0:
+            return
 
         def find_empty_gasfield():
             for g in self.api.geysers:
@@ -156,7 +158,5 @@ class Build():
                 await self.api.build(PHOTONCANNON, near=desired_cannon_position, max_distance=10)
 
     def safe_base_build_position(self, nexus):
-        distance = (self.api.units(PYLON).amount * 4) + 5
-        iterations = 10
-        others = self.api.units(PYLON)
+        distance = min(((self.api.units(PYLON).amount * 4) + 4), 15)
         return nexus.position.towards_with_random_angle(self.api.game_info.map_center, distance, (pi/2))
