@@ -5,6 +5,7 @@ from sc2.player import Bot, Computer
 from sc2.ids.buff_id import BuffId
 
 DESIRED_WORKER_COUNT = 16
+DESIRED_STARGATE_COUNT = 2
 
 class Build():
     def __init__(self, api):
@@ -17,31 +18,32 @@ class Build():
         else:
             nexus = self.api.units(NEXUS).first
 
-        # Mine minerals biatch
-        for idle_worker in self.api.workers.idle:
-            mf = self.api.state.mineral_field.closest_to(idle_worker)
-            await self.api.do(idle_worker.gather(mf))    
-
-        # Create new workers first
-        if self.api.workers.amount < DESIRED_WORKER_COUNT and nexus.noqueue:
-            if self.api.can_afford(PROBE):
-                print("Train new worker")
-                await self.api.do(nexus.train(PROBE))
-            else:
-                print("Can't afford worker")
-
+        await self.train_new_workers(nexus)
         await self.build_gas_stuff()
         await self.build_pylons(nexus)
         await self.build_gateway()
         await self.build_cybernetics_core()
         await self.build_stargate()
+        await self.manage_workers(nexus)
 
         #print("Build step done")
 
-    async def build_pylons(self, nexus): 
+    async def manage_workers(self, nexus):
+        # Mine minerals biatch
+        await self.api.distribute_workers()
+        #for idle_worker in self.api.workers.idle:
+        #    mf = self.api.state.mineral_field.closest_to(idle_worker)
+        #    await self.api.do(idle_worker.gather(mf))
+
+    async def train_new_workers(self, nexus):
+        if self.api.workers.amount < DESIRED_WORKER_COUNT and nexus.noqueue:
+            if self.api.can_afford(PROBE):
+                print("Train new worker")
+                await self.api.do(nexus.train(PROBE))
+
+    async def build_pylons(self, nexus):
         if self.api.already_pending(PYLON):
             return
-        
         if not self.api.units(PYLON).exists:
             if self.api.can_afford(PYLON):
                 print("Building first pylon!")
@@ -52,9 +54,20 @@ class Build():
                 await self.api.build(PYLON, near=nexus)
 
     async def build_gas_stuff(self):
+        def gaysers_not_full():
+            for g in self.api.geysers:
+                if g.ideal_harvesters > g.assigned_harvesters:
+                    return True
+            return False
+
         for nexus in self.api.units(NEXUS).ready:
             vgs = self.api.state.vespene_geyser.closer_than(20.0, nexus)
+            should_build = gaysers_not_full()
+            if self.api.units(ASSIMILATOR).ready.exists and not should_build:
+                return
             for vg in vgs:
+                if self.api.already_pending(ASSIMILATOR):
+                    return
                 if not self.api.can_afford(ASSIMILATOR):
                     #print("Can't afford assimilator")
                     break
@@ -90,8 +103,8 @@ class Build():
             return
         
         pylon = self.api.units(PYLON).ready.random
-        if self.api.units(STARGATE).amount < 3 and not self.api.already_pending(STARGATE):
+        if self.api.units(STARGATE).amount < DESIRED_STARGATE_COUNT and not self.api.already_pending(STARGATE):
             if self.api.can_afford(STARGATE):
-                print("Build stargåte")
+                print("Build stargate")
                 await self.api.build(STARGATE, near=pylon)
 
