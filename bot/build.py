@@ -24,7 +24,8 @@ class Build():
         await self.build_gas_stuff()
         await self.build_gateway()
         await self.build_cybernetics_core()
-        await self.build_stargate()
+        await self.build_stargate(iteration)
+        await self.build_forge()
         await self.manage_workers(nexus)
 
         #print("Build step done")
@@ -112,13 +113,22 @@ class Build():
                 print("Build cybernetics core")
                 await self.api.build(CYBERNETICSCORE, near=pylon)
 
-    async def build_stargate(self):
+    async def build_stargate(self, iteration):
         if not self.api.units(PYLON).ready.exists or not self.api.units(CYBERNETICSCORE).ready.exists:
             return
         
         pylon = self.api.units(PYLON).ready.random
         if self.api.units(STARGATE).amount < DESIRED_STARGATE_COUNT and not self.api.already_pending(STARGATE):
-            if self.api.can_afford(STARGATE):
+            if (not self.api.units(STARGATE).ready.exists or iteration > 1200) and self.api.can_afford(STARGATE):
                 print("Build stargate")
                 await self.api.build(STARGATE, near=pylon)
+    
+    async def build_forge(self):
+        if not self.api.units(STARGATE).ready.exists or self.api.units(FORGE).ready.exists:
+            return
+        pylon = self.api.units(PYLON).ready.random
+        if not self.api.already_pending(FORGE):
+            if self.api.can_afford(FORGE):
+                print("Build forge")
+                await self.api.build(FORGE, near=pylon)
 
