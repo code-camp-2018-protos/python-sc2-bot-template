@@ -15,7 +15,7 @@ class War():
         self.first_worker_tag = None
         self.oracle_count = 0
         self.home_ramp_location = None
-        self.unit_healths = {} # Tag, Health
+        self.unit_healths = {}  # Tag, Health
 
     async def on_step(self, iteration):
         # await self.attack_with_first_worker()
@@ -34,7 +34,7 @@ class War():
         await self.attack_with_all_we_got()
         await self.move_to_defensive(iteration, list(UNIT_BUILDER_MAP.keys()))
         await self.harass(iteration)
-        
+
     async def on_start(self):
         pass
 
@@ -43,18 +43,17 @@ class War():
         Priotise saving units over watching the ramp.
         """
         #units_for_defence = self.get_all_units_by_types(units)
-        #print(self.api.game_info.map_ramps.closest_to(self.api.units(NEXUS).first))
-            
+        # print(self.api.game_info.map_ramps.closest_to(self.api.units(NEXUS).first))
 
         units_under_attack = self.units_under_attack()
         # Check if empty
-        if units_under_attack: 
+        if units_under_attack:
             print("Nope")
-            #for unit_type in units:
+            # for unit_type in units:
             #    by_type = self.get_all_units_by_type(unit_type)
             #    for unit in by_type:
             #        if unit.is_idle:
-            #            await self.api.do(unit.move(self.api.units(unit_type).find_by_tag(units_under_attack[0]).location))           
+            #            await self.api.do(unit.move(self.api.units(unit_type).find_by_tag(units_under_attack[0]).location))
         else:
             if iteration % 10 == 0:
                 for unit_type in units:
@@ -65,10 +64,10 @@ class War():
                             print(self.home_ramp_location)
                             await self.api.do(unit.move(self.home_ramp_location))
 
-        #for unit in units_for_defence:
+        # for unit in units_for_defence:
         #    if unit.is_idle:
         #        self.api.do(unit.move(self.home_ramp))
-        
+
     def units_under_attack(self):
         units = []
         # Check if the health has changed
@@ -77,7 +76,8 @@ class War():
             if prev_health is None:
                 self.unit_healths[unit.tag] = unit.health
             else:
-                if self.unit_healths[unit.tag] > unit.health and unit.health > 0: # Health has decresed and unit is alive
+                # Health has decresed and unit is alive
+                if self.unit_healths[unit.tag] > unit.health and unit.health > 0:
                     units.append(unit.tag)
         return units
 
@@ -110,6 +110,7 @@ class War():
         if len(self.api.units(unit_type)) < number_of_units:
             for building_unit in self.api.units(UNIT_BUILDER_MAP[unit_type]).ready.noqueue:
                 if self.api.can_afford(unit_type):
+                    print("Building unit {}".format(unit_type))
                     await self.api.do(building_unit.train(unit_type))
 
     async def build_shitload_of_units(self, iteration):
@@ -122,9 +123,14 @@ class War():
         if len(all_attacking_units) < sum(NUM_UNIT_BUILDS.values()) / 2:
             return
 
-        for attacker in all_attacking_units:
-            if attacker.is_idle:
-                await self.api.do(attacker.attack(self.api.enemy_start_locations[0]))
+        valid_attackers = [
+            unit for unit in all_attacking_units if unit.is_idle]
+        if len(valid_attackers) == 0:
+            return
+
+        print("Attacking with {} units".format(len(valid_attackers)))
+        for attacker in valid_attackers:
+            await self.api.do(attacker.attack(self.api.enemy_start_locations[0]))
 
     def get_all_attacking_units(self):
         units = []
