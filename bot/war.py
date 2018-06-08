@@ -16,11 +16,11 @@ class War():
 
     async def on_step(self, iteration):
         # await self.attack_with_first_worker()
-        await self.build_shitload_of_zealots(iteration)
+        await self.build_shitload_of_units(iteration)
         await self.attack_with_all_we_got()
         await self.move_to_defensive()
         await self.harass(iteration)
-        
+
     async def move_to_defensive(self):
         """Move unit to stand between own and enemy."""
         print(self.api.enemy_start_locations[0])
@@ -40,14 +40,9 @@ class War():
                         await self.api.do(stargate.train(ORACLE))
                         self.oracle_count += 1
 
-        await self.build_shitload_of_stalkers(iteration)
-        await self.build_shitload_of_adepts(iteration)
-        await self.attack_with_all_we_got()
-
         if iteration % 100 == 0:
             for oracle in self.api.units(ORACLE):
                 await self.api.do(oracle.attack(self.api.enemy_start_locations[0]))
-
 
     async def build_num_of(self, number_of_units, unit_type, iteration):
         if build_turn(iteration, 2):
@@ -63,14 +58,9 @@ class War():
                 if self.api.can_afford(unit_type):
                     await self.api.do(building_unit.train(unit_type))
 
-    async def build_shitload_of_zealots(self, iteration):
-        await self.build_num_of(3, ZEALOT, iteration)
-
-    async def build_shitload_of_stalkers(self, iteration):
-        await self.build_num_of(3, STALKER, iteration)
-
-    async def build_shitload_of_adepts(self, iteration):
-        await self.build_num_of(5, ADEPT, iteration)
+    async def build_shitload_of_units(self, iteration):
+        for unit_type, num_units in NUM_UNIT_BUILDS.items():
+            await self.build_num_of(num_units, unit_type, iteration)
 
     async def attack_with_all_we_got(self):
         all_attacking_units = self.get_all_attacking_units()
@@ -94,4 +84,10 @@ UNIT_BUILDER_MAP = {
     ZEALOT: GATEWAY,
     STALKER: GATEWAY,
     ADEPT: GATEWAY
+}
+
+NUM_UNIT_BUILDS = {
+    ZEALOT: 3,
+    STALKER: 10,
+    ADEPT: 5
 }
