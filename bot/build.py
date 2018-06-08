@@ -31,8 +31,22 @@ class Build():
                 print("Can't afford worker")
 
         await self.build_gas_stuff()
+        await self.build_pylons(nexus)
 
         #print("Build step done")
+
+    async def build_pylons(self, nexus): 
+        if self.api.already_pending(PYLON):
+            return
+        
+        if not self.api.units(PYLON).exists:
+            if self.api.can_afford(PYLON):
+                print("Building first pylon!")
+                await self.api.build(PYLON, near=nexus)
+        elif self.api.supply_left < 2 and not self.api.already_pending(PYLON):
+            if self.api.can_afford(PYLON):
+                print("Building additional pylon")
+                await self.api.build(PYLON, near=nexus)
 
     async def build_gas_stuff(self):
         for nexus in self.api.units(NEXUS).ready:

@@ -12,8 +12,8 @@ class MyBot(sc2.BotAI):
 
     def __init__(self):
         self.war = War(self)
-        self.build = Build(self)
+        self.builder = Build(self)
 
     async def on_step(self, iteration):
         await self.war.on_step(iteration)
-        await self.build.on_step(iteration)
+        await self.builder.on_step(iteration)
