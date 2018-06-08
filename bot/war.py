@@ -4,6 +4,7 @@ from sc2.position import Point2
 import time
 
 MIN_ARMY_SIZE = 9
+ORACLE_HARASS = 0
 
 
 def build_turn(iteration, id):
@@ -26,12 +27,9 @@ class War():
                 Point2((max({p.x for p in d}), min({p.y for p in d})))
                 for d in self.api.main_base_ramp.top_wall_depos
             ][0]
-            print([
-                Point2((max({p.x for p in d}), min({p.y for p in d})))
-                for d in self.api.main_base_ramp.top_wall_depos
-            ])
 
-        await self.build_shitload_of_units(iteration)
+        if self.oracle_count >= ORACLE_HARASS:
+            await self.build_shitload_of_units(iteration)
         await self.attack_with_all_we_got()
         await self.move_to_defensive(iteration, list(UNIT_BUILDER_MAP.keys()))
         await self.harass(iteration)
@@ -83,13 +81,11 @@ class War():
         return units
 
     async def harass(self, iteration):
-        # Gateway == Barracs
-        # Janne resource ID 2
 
         # Check build
         if build_turn(iteration, 1) and self.api.units(STARGATE).exists:
             # Build initial Oracles
-            if self.oracle_count < 2:
+            if self.oracle_count < ORACLE_HARASS:
                 for stargate in self.api.units(STARGATE).ready.noqueue:
                     if self.api.can_afford(ORACLE):
                         await self.api.do(stargate.train(ORACLE))
